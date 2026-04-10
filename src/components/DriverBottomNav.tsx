@@ -12,7 +12,7 @@ export function DriverBottomNav() {
     { name: "Accueil", href: "/driver", icon: Home },
     { name: "Offres", href: "/driver/offers", icon: Receipt },
     { name: "Courses", href: "/driver/trips", icon: MapPin },
-    { name: "Véhicules", href: "/driver/trucks", icon: Truck },
+    { name: "Flotte", href: "/driver/trucks", icon: Truck },
     { name: "Historique", href: "/driver/history", icon: Clock },
   ];
 
