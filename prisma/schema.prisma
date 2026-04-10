@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  phone     String   @unique
+  email     String?  @unique
+  role      Role     @default(CLIENT)
+  photoUrl  String?
+  rating    Float    @default(5.0) // For drivers specifically
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ordersAsClient Order[] @relation("ClientOrders")
+  ordersAsDriver Order[] @relation("DriverOrders")
+  offers         Offer[]
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  title         String
+  pickUp        String
+  dropOff       String
+  stop          String?
+  type          String
+  urgency       String
+  description   String
+  hasInvoice    Boolean     @default(false)
+  needWorkers   Boolean     @default(false)
+  workersPayer  String?
+  photoAttached Boolean     @default(false)
+  status        OrderStatus @default(PENDING)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  clientId      String
+  client        User        @relation("ClientOrders", fields: [clientId], references: [id])
+  
+  driverId      String?
+  driver        User?       @relation("DriverOrders", fields: [driverId], references: [id])
+
+  offers        Offer[]
+}
+
+model Offer {
+  id        String   @id @default(cuid())
+  price     Float
+  vehicle   String
+  message   String?
+  createdAt DateTime @default(now())
+
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  driverId  String
+  driver    User     @relation(fields: [driverId], references: [id])
+}
+
+enum Role {
+  CLIENT
+  DRIVER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  NEGOTIATING
+  ASSIGNED
+  COMPLETED
+  CANCELLED
+}
