@@ -17,10 +17,15 @@ export default function DriverDashboard() {
         <div className="min-h-screen pb-20 md:pb-0 bg-background">
             <nav className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
-                    <div className="flex flex-col">
-                        <Link href="/" className="text-lg md:text-xl font-black text-primary leading-none">Courssa</Link>
-                        <span className="text-muted-foreground text-[10px] md:text-xs">Chauffeur</span>
-                    </div>
+                    <Link href="/" className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-sm">
+                            <Truck strokeWidth={2.5} size={18} className="w-5 h-5" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-lg md:text-xl font-black tracking-tight leading-none text-foreground">Courssa</span>
+                            <span className="text-muted-foreground text-[10px] md:text-xs font-semibold">Chauffeur</span>
+                        </div>
+                    </Link>
 
                     <div className="flex items-center gap-3">
                         <span className="flex items-center gap-1.5 md:gap-2 text-green-500 bg-green-500/10 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full text-[10px] md:text-xs border border-green-500/20 font-semibold">

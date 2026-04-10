@@ -167,8 +167,11 @@ export default function ClientDashboard() {
     <div className="min-h-screen pb-20 md:pb-0 bg-background">
       <nav className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-black text-primary">
-            Courssa
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-sm">
+              <Truck strokeWidth={2.5} size={18} className="w-5 h-5" />
+            </div>
+            <span className="text-xl font-black tracking-tight leading-none">Courssa</span>
           </Link>
           <Link
             href="/client/profile"
