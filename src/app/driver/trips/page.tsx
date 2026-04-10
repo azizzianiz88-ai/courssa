@@ -7,7 +7,7 @@ export default function TripsPage() {
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="flex items-center justify-between mb-6 pt-2">
-        <h1 className="text-2xl font-black text-foreground tracking-tight">الرحلات الحالية</h1>
+        <h1 className="text-2xl font-black text-foreground tracking-tight">Courses en cours</h1>
       </div>
 
       <div className="flex justify-center items-center h-[50vh]">
@@ -19,13 +19,13 @@ export default function TripsPage() {
           <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
             <MapPin size={32} className="text-green-500" />
           </div>
-          <h2 className="text-lg font-bold mb-2">ليس لديك أي رحلة نشطة</h2>
+          <h2 className="text-lg font-bold mb-2">Vous n'avez aucune course active</h2>
           <p className="text-sm text-muted-foreground mb-6">
-            ستظهر هنا الرحلة فور قيام العميل بقبول عرضك وموافقتك النهائية.
+            La course apparaîtra ici dès que le client acceptera votre offre et que vous confirmerez.
           </p>
           <button className="bg-foreground text-background px-6 py-3 rounded-xl font-bold flex items-center gap-2 active:scale-95 transition-transform">
             <Navigation size={18} />
-            البحث عن طلبات
+            Rechercher des courses
           </button>
         </motion.div>
       </div>

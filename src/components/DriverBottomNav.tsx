@@ -9,11 +9,11 @@ export function DriverBottomNav() {
   const pathname = usePathname();
 
   const navItems = [
-    { name: "الرئيسية", href: "/driver", icon: Home },
-    { name: "العروض", href: "/driver/offers", icon: Receipt },
-    { name: "الرحلات", href: "/driver/trips", icon: MapPin },
-    { name: "شاحناتي", href: "/driver/trucks", icon: Truck },
-    { name: "السجل", href: "/driver/history", icon: Clock },
+    { name: "Accueil", href: "/driver", icon: Home },
+    { name: "Offres", href: "/driver/offers", icon: Receipt },
+    { name: "Courses", href: "/driver/trips", icon: MapPin },
+    { name: "Véhicules", href: "/driver/trucks", icon: Truck },
+    { name: "Historique", href: "/driver/history", icon: Clock },
   ];
 
   return (
