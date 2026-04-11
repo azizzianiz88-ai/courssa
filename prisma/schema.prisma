@@ -27,6 +27,21 @@ model User {
   ordersAsClient Order[] @relation("ClientOrders")
   ordersAsDriver Order[] @relation("DriverOrders")
   offers         Offer[]
+  vehicles       Vehicle[] @relation("DriverVehicles")
+}
+
+model Vehicle {
+  id          String        @id @default(cuid())
+  type        String        // Camionnette, Fourgon, Petit Camion, etc.
+  capacity    Float?        // in tonnes
+  status      VehicleStatus @default(AVAILABLE) // available, in-service, broken
+  plateNumber String?
+  photoUrl    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  ownerId     String
+  owner       User          @relation("DriverVehicles", fields: [ownerId], references: [id], onDelete: Cascade)
 }
 
 model Order {
@@ -81,4 +96,10 @@ enum OrderStatus {
   ASSIGNED
   COMPLETED
   CANCELLED
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  IN_SERVICE
+  MAINTENANCE
 }
