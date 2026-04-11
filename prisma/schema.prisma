@@ -71,12 +71,16 @@ model Order {
 }
 
 model Offer {
-  id        String   @id @default(cuid())
-  price     Float
-  vehicle   String
-  message   String?
-  status    OfferStatus @default(PENDING)
-  createdAt DateTime @default(now())
+  id                 String   @id @default(cuid())
+  price              Float    // Driver's initial offer
+  clientCounterPrice Float?   // Client's counter-offer
+  driverFinalPrice   Float?   // Driver's final counter-offer
+  lastActionBy       String?  // 'CLIENT' or 'DRIVER'
+  
+  vehicle            String
+  message            String?
+  status             OfferStatus @default(PENDING)
+  createdAt          DateTime @default(now())
 
   orderId   String
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
