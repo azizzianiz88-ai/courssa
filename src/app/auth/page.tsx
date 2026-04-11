@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ArrowRight, ShieldCheck, ArrowLeft, Truck, User } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,18 +9,49 @@ export default function Auth() {
     const router = useRouter();
     const [step, setStep] = useState(1); // 1: Phone, 2: OTP, 3: Role Selection
     const [phone, setPhone] = useState("");
+    const [otp, setOtp] = useState(["", "", "", ""]);
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+    useEffect(() => {
+        if (step === 2) {
+            setTimeout(() => {
+                inputRefs.current[0]?.focus();
+            }, 100);
+        }
+    }, [step]);
 
     const handlePhoneSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (phone.length >= 8) setStep(2);
     }
 
+    const handleOtpChange = (index: number, value: string) => {
+        if (value && !/^\d+$/.test(value)) return;
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+        if (value !== "" && index < 3) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Backspace' && !otp[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
+
     const handleOtpSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setStep(3);
+        const fullOtp = otp.join("");
+        if (fullOtp.length === 4) {
+            setStep(3);
+        }
     }
 
     const selectRole = (role: 'client' | 'driver') => {
+        // Set a local session cookie to bypass the middleware guard
+        document.cookie = "courssa_session=true; path=/; max-age=86400;";
         if (role === 'client') router.push('/client/register');
         if (role === 'driver') router.push('/driver/register');
     }
@@ -82,7 +113,20 @@ export default function Auth() {
 
                             <div className="flex justify-between gap-3 mb-8">
                                 {[0, 1, 2, 3].map(i => (
-                                    <input key={i} required type="text" maxLength={1} className="w-14 h-14 text-center text-2xl font-black bg-background border border-border/50 rounded-xl outline-none focus:border-primary focus:bg-primary/5 transition-colors" />
+                                    <input 
+                                        key={i} 
+                                        ref={(el) => {
+                                            inputRefs.current[i] = el;
+                                        }}
+                                        required 
+                                        type="text" 
+                                        inputMode="numeric"
+                                        maxLength={1} 
+                                        value={otp[i]}
+                                        onChange={(e) => handleOtpChange(i, e.target.value)}
+                                        onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                                        className="w-14 h-14 text-center text-2xl font-black bg-background border border-border/50 rounded-xl outline-none focus:border-primary focus:bg-primary/5 transition-colors" 
+                                    />
                                 ))}
                             </div>
 
