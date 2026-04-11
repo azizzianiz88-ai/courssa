@@ -10,7 +10,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -52,12 +51,13 @@ model Order {
   stop          String?
   type          String
   urgency       String
-  description   String
-  hasInvoice    Boolean     @default(false)
-  needWorkers   Boolean     @default(false)
-  workersPayer  String?
-  photoAttached Boolean     @default(false)
-  status        OrderStatus @default(PENDING)
+  description      String
+  hasInvoice       Boolean     @default(false)
+  needWorkers      Boolean     @default(false)
+  workersPayer     String?
+  photoAttached    Boolean     @default(false)
+  requestedVehicle String?     // Targeted vehicle mapping
+  status           OrderStatus @default(PENDING)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -75,6 +75,7 @@ model Offer {
   price     Float
   vehicle   String
   message   String?
+  status    OfferStatus @default(PENDING)
   createdAt DateTime @default(now())
 
   orderId   String
@@ -93,9 +94,19 @@ enum Role {
 enum OrderStatus {
   PENDING
   NEGOTIATING
-  ASSIGNED
+  WAITING
+  LOADING
+  IN_TRANSIT
+  UNLOADING
   COMPLETED
   CANCELLED
+}
+
+enum OfferStatus {
+  PENDING
+  NEGOTIATING
+  ACCEPTED
+  REJECTED
 }
 
 enum VehicleStatus {
