@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
+export const dynamic = "force-static";
 
 // Apple icons need specific sizes, 512x512 covers standard needs
 export const size = {
