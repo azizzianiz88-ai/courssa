@@ -4,10 +4,17 @@ import { PrismaClient } from '../generated/prisma/client';
 // of Prisma Client in development mode due to hot reloading.
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: ['query'],
-  });
+// Prisma 7: requires accelerateUrl for direct DB connections
+function createPrismaClient() {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    // No DB configured — return a mock-safe client (won't crash at build time)
+    return new PrismaClient({ accelerateUrl: 'prisma://localhost' } as any);
+  }
+  return new PrismaClient({ accelerateUrl: url } as any);
+}
+
+export const prisma = globalForPrisma.prisma || createPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
