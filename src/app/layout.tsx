@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -10,6 +10,18 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Courssa | Transport de Marchandises et Meubles",
   description: "Courssa est votre application idéale pour transporter des marchandises et des meubles facilement et en toute sécurité.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
