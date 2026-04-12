@@ -2,41 +2,52 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
-  // Check if session cookie exists
-  const session = request.cookies.get('courssa_session');
-  
-  // Define protected routes that require authentication
-  const isProtectedRoute = 
-    request.nextUrl.pathname.startsWith('/client') || 
-    request.nextUrl.pathname.startsWith('/driver');
-  
-  // Exclude auth routes and public assets from checks
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/auth');
+  const session = request.cookies.get('courssa_session')?.value;
+  const role    = request.cookies.get('courssa_role')?.value;
+  const path    = request.nextUrl.pathname;
 
-  // If user is trying to access a protected route without a session, redirect to auth
-  if (isProtectedRoute && !session && !isAuthRoute) {
-    const url = new URL('/auth', request.url);
-    // Optional: add ?callbackUrl= to remember where they wanted to go
-    return NextResponse.redirect(url);
+  const isProtected = path.startsWith('/client') || path.startsWith('/driver') || path.startsWith('/admin');
+  const isAuthRoute = path.startsWith('/auth');
+  const isApiRoute  = path.startsWith('/api');
+
+  // Skip API routes
+  if (isApiRoute) return NextResponse.next();
+
+  // No session → redirect to auth
+  if (isProtected && !session) {
+    return NextResponse.redirect(new URL('/auth', request.url));
   }
 
-  // If a logged-in user tries to enter '/auth', you could optionally redirect them to their dashboard
-  // Leaving this out for now to allow them to switch accounts easily.
+  // Role-based access control
+  if (session && isProtected) {
+    // Prevent clients from accessing driver pages
+    if (path.startsWith('/driver') && role === 'CLIENT') {
+      return NextResponse.redirect(new URL('/client', request.url));
+    }
+    // Prevent drivers from accessing client pages
+    if (path.startsWith('/client') && role === 'DRIVER') {
+      return NextResponse.redirect(new URL('/driver', request.url));
+    }
+    // Prevent non-admins from accessing admin pages
+    if (path.startsWith('/admin') && role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/auth', request.url));
+    }
+  }
+
+  // Logged-in user trying to go to /auth → send them to their dashboard
+  if (isAuthRoute && session && role) {
+    const dashMap: Record<string, string> = {
+      ADMIN: '/admin', CLIENT: '/client', DRIVER: '/driver'
+    };
+    const dest = dashMap[role];
+    if (dest) return NextResponse.redirect(new URL(dest, request.url));
+  }
 
   return NextResponse.next();
 }
 
-// Config to specify which routes should be processed by the middleware
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
-     * - icon.png, apple-touch-icon.png (app icons)
-     */
     '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|icon.png|apple-touch-icon.png).*)',
   ],
 };

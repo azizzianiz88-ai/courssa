@@ -1,168 +1,246 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
-import { ArrowRight, ShieldCheck, ArrowLeft, Truck, User } from 'lucide-react';
-import Link from 'next/link';
+import { ArrowRight, ShieldCheck, ArrowLeft, Truck, User, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
 export default function Auth() {
-    const router = useRouter();
-    const [step, setStep] = useState(1); // 1: Phone, 2: OTP, 3: Role Selection
-    const [phone, setPhone] = useState("");
-    const [otp, setOtp] = useState(["", "", "", ""]);
-    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const router = useRouter();
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [pendingPhone, setPendingPhone] = useState(""); // phone waiting for role selection
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-    useEffect(() => {
-        if (step === 2) {
-            setTimeout(() => {
-                inputRefs.current[0]?.focus();
-            }, 100);
-        }
-    }, [step]);
+  useEffect(() => {
+    if (step === 2) setTimeout(() => inputRefs.current[0]?.focus(), 100);
+  }, [step]);
 
-    const handlePhoneSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (phone.length >= 8) setStep(2);
+  // ── Step 1: Phone submission ─────────────────────────────────────
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (phone.length < 8) return;
+    
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone })
+      });
+
+      const data = await res.json();
+
+      if (data.role === "ADMIN" || data.role === "CLIENT" || data.role === "DRIVER") {
+        // Existing user or admin → redirect immediately after "OTP" step (simulated)
+        setPendingPhone(phone);
+        setStep(2); // show OTP screen
+      } else if (data.role === "NEW") {
+        // New user → OTP then role selection
+        setPendingPhone(data.phone);
+        setStep(2);
+      } else {
+        setError("Erreur de connexion. Réessayez.");
+      }
+    } catch {
+      setError("Erreur réseau. Vérifiez votre connexion.");
     }
 
-    const handleOtpChange = (index: number, value: string) => {
-        if (value && !/^\d+$/.test(value)) return;
-        const newOtp = [...otp];
-        newOtp[index] = value;
-        setOtp(newOtp);
-        if (value !== "" && index < 3) {
-            inputRefs.current[index + 1]?.focus();
-        }
-    };
+    setIsLoading(false);
+  };
 
-    const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Backspace' && !otp[index] && index > 0) {
-            inputRefs.current[index - 1]?.focus();
-        }
-    };
+  // ── Step 2: OTP verified (simulated, accept any 4 digits) ─────────
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const fullOtp = otp.join("");
+    if (fullOtp.length !== 4) return;
 
-    const handleOtpSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        const fullOtp = otp.join("");
-        if (fullOtp.length === 4) {
-            setStep(3);
-        }
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // Re-call login to get role after OTP "verification"
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: pendingPhone })
+      });
+      const data = await res.json();
+
+      if (data.role === "ADMIN") {
+        router.push("/admin");
+      } else if (data.role === "CLIENT") {
+        router.push("/client");
+      } else if (data.role === "DRIVER") {
+        router.push("/driver");
+      } else {
+        // NEW user → role selection
+        setStep(3);
+      }
+    } catch {
+      setError("Erreur. Réessayez.");
     }
 
-    const selectRole = (role: 'client' | 'driver') => {
-        // Set a local session cookie to bypass the middleware guard
-        document.cookie = "courssa_session=true; path=/; max-age=86400;";
-        if (role === 'client') router.push('/client/register');
-        if (role === 'driver') router.push('/driver/register');
-    }
+    setIsLoading(false);
+  };
 
-    return (
-        <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">
-            <div className="w-full max-w-md bg-accent/30 p-8 rounded-3xl border border-border/50 overflow-hidden relative min-h-[450px] flex flex-col justify-center">
-                <Link href="/" className="absolute top-6 left-6 text-muted-foreground hover:text-foreground">
-                    <ArrowLeft size={24} />
-                </Link>
-                <div className="text-center mb-8 mt-4">
-                    <h1 className="text-3xl font-black text-primary mb-2">Courssa</h1>
+  // ── Step 3: Role selection (new users only) ───────────────────────
+  const selectRole = (role: 'CLIENT' | 'DRIVER') => {
+    document.cookie = `courssa_session=new:${pendingPhone}; path=/; max-age=86400;`;
+    document.cookie = `courssa_role=${role}; path=/; max-age=86400;`;
+    if (role === 'CLIENT') router.push('/client/register');
+    if (role === 'DRIVER') router.push('/driver/register');
+  };
+
+  // ── OTP helpers ──────────────────────────────────────────────────
+  const handleOtpChange = (index: number, value: string) => {
+    if (value && !/^\d+$/.test(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    if (value !== "" && index < 3) inputRefs.current[index + 1]?.focus();
+    // Auto-submit when all 4 filled
+    if (index === 3 && value !== "") {
+      const full = [...newOtp.slice(0, 3), value].join("");
+      if (full.length === 4) {
+        setTimeout(() => {
+          const form = document.getElementById("otp-form") as HTMLFormElement;
+          form?.requestSubmit();
+        }, 150);
+      }
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">
+      {/* Background decoration */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))]" />
+
+      <div className="w-full max-w-sm relative z-10">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary/25">
+            <Truck strokeWidth={2.5} size={32} className="text-primary-foreground" />
+          </div>
+          <h1 className="text-3xl font-black tracking-tight">Courssa</h1>
+          <p className="text-muted-foreground text-sm mt-1">La plateforme de Transport</p>
+        </div>
+
+        <div className="bg-accent/30 backdrop-blur border border-border/50 p-7 rounded-3xl shadow-2xl">
+          <AnimatePresence mode="wait">
+
+            {/* ─── STEP 1: Phone ─── */}
+            {step === 1 && (
+              <motion.form key="step1" id="phone-form" onSubmit={handlePhoneSubmit}
+                initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+                <h2 className="text-xl font-bold mb-1">Connexion</h2>
+                <p className="text-sm text-muted-foreground mb-5">Entrez votre numéro de téléphone</p>
+
+                <div className="flex mb-4">
+                  <div className="bg-background border border-r-0 border-border/50 rounded-l-xl py-3.5 px-4 text-sm font-bold flex items-center text-muted-foreground">
+                    🇩🇿 +213
+                  </div>
+                  <input required type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                    className="flex-1 bg-background border border-border/50 rounded-r-xl py-3.5 px-4 text-base font-bold outline-none focus:border-primary transition-colors"
+                    placeholder="0XX XX XX XX" />
                 </div>
 
-                <AnimatePresence mode="wait">
-                    {step === 1 && (
-                        <motion.form key="step1" onSubmit={handlePhoneSubmit} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                            <h2 className="text-xl font-bold mb-2">Entrez votre numéro</h2>
-                            <p className="text-sm text-muted-foreground mb-6">Un code de vérification vous sera envoyé par SMS.</p>
+                {error && <p className="text-red-500 text-sm mb-3 font-medium">{error}</p>}
 
-                            <div className="flex mb-6">
-                                <div className="bg-background border border-r-0 border-border/50 rounded-l-xl py-3 px-4 text-sm font-bold flex items-center border-r-transparent">
-                                    +213
-                                </div>
-                                <input required type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full bg-background border border-border/50 rounded-r-xl py-3 px-4 text-sm outline-none focus:border-primary" placeholder="5xx xx xx xx" />
-                            </div>
+                <button disabled={isLoading || phone.length < 8}
+                  className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-60 transition-all active:scale-95">
+                  {isLoading ? <Loader2 size={20} className="animate-spin" /> : <>Continuer <ArrowRight size={18} /></>}
+                </button>
 
-                            <button className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 hover:scale-[1.02] transition-transform shadow-lg shadow-primary/20">
-                                Continuer <ArrowRight size={18} />
-                            </button>
+                <p className="text-xs text-center text-muted-foreground mt-5">
+                  Premier accès ? Vous pourrez choisir votre rôle après vérification.
+                </p>
+              </motion.form>
+            )}
 
-                            <div className="relative flex items-center py-6">
-                                <div className="flex-grow border-t border-border/50"></div>
-                                <span className="shrink-0 px-4 text-xs text-muted-foreground">Ou avec</span>
-                                <div className="flex-grow border-t border-border/50"></div>
-                            </div>
+            {/* ─── STEP 2: OTP ─── */}
+            {step === 2 && (
+              <motion.form key="step2" id="otp-form" onSubmit={handleOtpSubmit}
+                initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+                <div className="flex justify-center mb-5">
+                  <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center">
+                    <ShieldCheck size={28} className="text-primary" />
+                  </div>
+                </div>
+                <h2 className="text-xl font-bold mb-1 text-center">Vérification</h2>
+                <p className="text-sm text-muted-foreground mb-6 text-center">
+                  Code envoyé au <b>+213 {pendingPhone}</b>
+                </p>
 
-                            <button type="button" className="w-full bg-white text-black font-semibold py-3 rounded-xl flex items-center justify-center gap-3 hover:bg-zinc-200 transition-colors border border-border/20">
-                                <svg viewBox="0 0 24 24" className="w-5 h-5">
-                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                                </svg>
-                                Continuer avec Google
-                            </button>
-                        </motion.form>
-                    )}
+                <div className="flex justify-center gap-3 mb-7">
+                  {[0, 1, 2, 3].map(i => (
+                    <input key={i} ref={el => { inputRefs.current[i] = el; }}
+                      type="text" inputMode="numeric" maxLength={1} value={otp[i]}
+                      onChange={e => handleOtpChange(i, e.target.value)}
+                      onKeyDown={e => handleOtpKeyDown(i, e)}
+                      className="w-14 h-14 text-center text-2xl font-black bg-background border-2 border-border/50 rounded-xl outline-none focus:border-primary focus:bg-primary/5 transition-all" />
+                  ))}
+                </div>
 
-                    {step === 2 && (
-                        <motion.form key="step2" onSubmit={handleOtpSubmit} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                            <div className="flex justify-center mb-6">
-                                <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center">
-                                    <ShieldCheck size={32} className="text-primary" />
-                                </div>
-                            </div>
-                            <h2 className="text-xl font-bold mb-2 text-center">Vérification SMS</h2>
-                            <p className="text-sm text-muted-foreground mb-6 text-center">Entrez le code à 4 chiffres envoyé au +213 {phone}</p>
+                {error && <p className="text-red-500 text-sm mb-3 text-center font-medium">{error}</p>}
 
-                            <div className="flex justify-between gap-3 mb-8">
-                                {[0, 1, 2, 3].map(i => (
-                                    <input 
-                                        key={i} 
-                                        ref={(el) => {
-                                            inputRefs.current[i] = el;
-                                        }}
-                                        required 
-                                        type="text" 
-                                        inputMode="numeric"
-                                        maxLength={1} 
-                                        value={otp[i]}
-                                        onChange={(e) => handleOtpChange(i, e.target.value)}
-                                        onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                                        className="w-14 h-14 text-center text-2xl font-black bg-background border border-border/50 rounded-xl outline-none focus:border-primary focus:bg-primary/5 transition-colors" 
-                                    />
-                                ))}
-                            </div>
+                <button disabled={isLoading || otp.join("").length < 4}
+                  className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-60 transition-all active:scale-95">
+                  {isLoading ? <Loader2 size={20} className="animate-spin" /> : "Vérifier"}
+                </button>
+                <button type="button" onClick={() => { setStep(1); setOtp(["","","",""]); setError(""); }}
+                  className="w-full mt-3 text-sm text-muted-foreground font-semibold py-2 hover:text-foreground transition-colors flex items-center justify-center gap-1">
+                  <ArrowLeft size={14} /> Modifier le numéro
+                </button>
+              </motion.form>
+            )}
 
-                            <button className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 hover:scale-[1.02] transition-transform shadow-lg shadow-primary/20">
-                                Vérifier
-                            </button>
-                            <button type="button" onClick={() => setStep(1)} className="w-full mt-4 text-sm text-muted-foreground font-semibold py-2 hover:text-foreground transition-colors">
-                                Modifier le numéro
-                            </button>
-                        </motion.form>
-                    )}
+            {/* ─── STEP 3: Role Selection (new users) ─── */}
+            {step === 3 && (
+              <motion.div key="step3"
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+                <h2 className="text-2xl font-bold mb-1 text-center">Bienvenue !</h2>
+                <p className="text-sm text-muted-foreground mb-7 text-center">Comment souhaitez-vous utiliser Courssa ?</p>
 
-                    {step === 3 && (
-                        <motion.div key="step3" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-                            <h2 className="text-2xl font-bold mb-2 text-center">Bienvenue !</h2>
-                            <p className="text-sm text-muted-foreground mb-8 text-center">Choisissez votre profil pour continuer</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <button onClick={() => selectRole('CLIENT')}
+                    className="bg-background border-2 border-border/50 hover:border-primary rounded-2xl p-5 flex flex-col items-center gap-3 transition-all group active:scale-95">
+                    <div className="w-14 h-14 bg-accent group-hover:bg-primary/20 rounded-full flex items-center justify-center text-foreground group-hover:text-primary transition-colors">
+                      <User size={28} />
+                    </div>
+                    <div>
+                      <div className="font-bold">Client</div>
+                      <div className="text-xs text-muted-foreground">Envoyer des colis</div>
+                    </div>
+                  </button>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <button onClick={() => selectRole('client')} className="bg-background border-2 border-border/50 hover:border-primary rounded-2xl p-6 flex flex-col items-center gap-4 transition-colors group">
-                                    <div className="w-16 h-16 bg-accent group-hover:bg-primary/20 rounded-full flex items-center justify-center text-foreground group-hover:text-primary transition-colors">
-                                        <User size={32} />
-                                    </div>
-                                    <span className="font-bold text-lg">Je suis un<br />Client</span>
-                                </button>
+                  <button onClick={() => selectRole('DRIVER')}
+                    className="bg-background border-2 border-border/50 hover:border-primary rounded-2xl p-5 flex flex-col items-center gap-3 transition-all group active:scale-95">
+                    <div className="w-14 h-14 bg-accent group-hover:bg-primary/20 rounded-full flex items-center justify-center text-foreground group-hover:text-primary transition-colors">
+                      <Truck size={28} />
+                    </div>
+                    <div>
+                      <div className="font-bold">Chauffeur</div>
+                      <div className="text-xs text-muted-foreground">Transporter des colis</div>
+                    </div>
+                  </button>
+                </div>
+              </motion.div>
+            )}
 
-                                <button onClick={() => selectRole('driver')} className="bg-background border-2 border-border/50 hover:border-primary rounded-2xl p-6 flex flex-col items-center gap-4 transition-colors group">
-                                    <div className="w-16 h-16 bg-accent group-hover:bg-primary/20 rounded-full flex items-center justify-center text-foreground group-hover:text-primary transition-colors">
-                                        <Truck size={32} />
-                                    </div>
-                                    <span className="font-bold text-lg">Je suis un<br />Chauffeur</span>
-                                </button>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
+          </AnimatePresence>
         </div>
-    )
+      </div>
+    </div>
+  );
 }
