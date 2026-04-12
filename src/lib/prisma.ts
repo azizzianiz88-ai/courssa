@@ -6,11 +6,16 @@ import { PrismaPg } from '@prisma/adapter-pg';
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL;
-  
+  // Vercel-Supabase integration can set several env var names.
+  // Try them all in priority order.
+  const connectionString =
+    process.env.POSTGRES_PRISMA_URL ||   // Vercel-Supabase integration (pooled, Prisma-friendly)
+    process.env.POSTGRES_URL ||           // Vercel-Supabase generic pooled
+    process.env.DATABASE_URL ||           // Manual / custom
+    process.env.POSTGRES_URL_NON_POOLING; // Direct (fallback)
+
   if (!connectionString) {
-    console.warn('[Prisma] No DATABASE_URL found. DB operations will fail.');
-    // Return a client that will fail gracefully at runtime (not at build time)
+    console.warn('[Prisma] No database URL found. DB operations will fail at runtime.');
     const adapter = new PrismaPg({ connectionString: 'postgresql://localhost/fake' });
     return new PrismaClient({ adapter } as any);
   }
@@ -22,3 +27,4 @@ function createPrismaClient() {
 export const prisma = globalForPrisma.prisma || createPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
