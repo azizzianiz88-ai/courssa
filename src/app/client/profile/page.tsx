@@ -1,80 +1,118 @@
 "use client";
 import Link from 'next/link';
-import { User, Settings, CreditCard, Bell, LogOut, ChevronLeft, Edit2 } from 'lucide-react';
+import { User, Package, Bell, Moon, HelpCircle, LogOut, ChevronRight, Phone, Star, Shield } from 'lucide-react';
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useLogout } from '@/hooks/useLogout';
+
+function SettingRow({ icon, label, sub, href, danger, onClick, right }: any) {
+  const cls = `p-4 flex items-center gap-4 rounded-2xl cursor-pointer transition-all active:scale-[0.98] ${danger ? 'hover:bg-red-500/10 group' : 'hover:bg-background/60'}`;
+  const content = (
+    <>
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${danger ? 'bg-red-500/10 text-red-500 group-hover:bg-red-500 group-hover:text-white transition-colors' : 'bg-accent text-foreground'}`}>
+        {icon}
+      </div>
+      <div className="flex-1">
+        <h3 className={`font-semibold text-sm ${danger ? 'text-red-500' : ''}`}>{label}</h3>
+        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+      </div>
+      {right ?? <ChevronRight size={16} className="text-muted-foreground" />}
+    </>
+  );
+  if (href) return <Link href={href} className={cls}>{content}</Link>;
+  return <button className={`${cls} w-full text-left`} onClick={onClick}>{content}</button>;
+}
 
 export default function ClientProfile() {
-    const [user, setUser] = useState({ name: "Mohamed Ali", email: "mohamed@courssa.dz", phone: "+213 550 12 34 56" });
+  const { logout, isLoggingOut } = useLogout();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-    return (
-        <div className="min-h-screen bg-background flex flex-col pb-20 md:pb-0">
-            <nav className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-50">
-                <div className="max-w-3xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center gap-4">
-                    <Link href="/client" className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-accent transition-colors">
-                        <ChevronLeft size={24} />
-                    </Link>
-                    <h1 className="text-xl font-bold">Mon Profil</h1>
-                </div>
-            </nav>
+  const phone = typeof document !== 'undefined'
+    ? document.cookie.split('; ').find(r => r.startsWith('courssa_session='))?.split('=')[1]?.split(':')[1] || '—'
+    : '—';
 
-            <main className="max-w-3xl mx-auto w-full px-4 md:px-6 py-6 md:py-10 flex-grow">
-
-                <div className="flex flex-col items-center text-center mb-10">
-                    <div className="w-24 h-24 rounded-full bg-primary/20 text-primary flex items-center justify-center text-3xl font-bold mb-4 relative">
-                        M
-                        <button className="absolute bottom-0 right-0 w-8 h-8 bg-background border border-border shadow-sm rounded-full flex justify-center items-center text-foreground hover:bg-accent transition-colors">
-                            <Edit2 size={14} />
-                        </button>
-                    </div>
-                    <h2 className="text-2xl font-bold">{user.name}</h2>
-                    <p className="text-muted-foreground mt-1">{user.phone}</p>
-                </div>
-
-                <div className="space-y-6">
-                    <div className="bg-accent/30 border border-border/50 rounded-3xl p-2">
-                        <div className="p-4 flex items-center gap-4 hover:bg-background/50 rounded-2xl cursor-pointer transition-colors border-b border-transparent hover:border-border/50">
-                            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-foreground"><User size={20} /></div>
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-sm">Informations Personnelles</h3>
-                                <p className="text-xs text-muted-foreground">Modifier vos détails de compte</p>
-                            </div>
-                        </div>
-
-                        <div className="p-4 flex items-center gap-4 hover:bg-background/50 rounded-2xl cursor-pointer transition-colors border-b border-transparent hover:border-border/50">
-                            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-foreground"><CreditCard size={20} /></div>
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-sm">Moyens de paiement</h3>
-                                <p className="text-xs text-muted-foreground">Gérer vos cartes et factures</p>
-                            </div>
-                        </div>
-
-                        <div className="p-4 flex items-center gap-4 hover:bg-background/50 rounded-2xl cursor-pointer transition-colors">
-                            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-foreground"><Bell size={20} /></div>
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-sm">Notifications</h3>
-                                <p className="text-xs text-muted-foreground">Alertes et mises à jour</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-accent/30 border border-border/50 rounded-3xl p-2">
-                        <div className="p-4 flex items-center gap-4 hover:bg-background/50 rounded-2xl cursor-pointer transition-colors border-b border-transparent hover:border-border/50">
-                            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-foreground"><Settings size={20} /></div>
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-sm">Paramètres généraux</h3>
-                                <p className="text-xs text-muted-foreground">Langue, apparence, affichage</p>
-                            </div>
-                        </div>
-
-                        <Link href="/" className="p-4 flex items-center gap-4 hover:bg-red-500/10 rounded-2xl cursor-pointer transition-colors group">
-                            <div className="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center text-red-500 group-hover:bg-red-500 group-hover:text-white transition-colors"><LogOut size={20} /></div>
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-sm text-red-500">Se déconnecter</h3>
-                            </div>
-                        </Link>
-                    </div>
-                </div>
-            </main>
+  return (
+    <div className="min-h-screen bg-background flex flex-col pb-24">
+      {/* Profile Header */}
+      <div className="bg-gradient-to-b from-primary/10 to-transparent px-4 pt-12 pb-8 text-center">
+        <div className="w-24 h-24 rounded-full bg-primary/20 border-4 border-primary/30 flex items-center justify-center text-4xl font-black text-primary mx-auto mb-4">
+          M
         </div>
-    )
+        <h1 className="text-2xl font-black">Client</h1>
+        <p className="text-muted-foreground text-sm mt-1 flex items-center justify-center gap-1.5">
+          <Phone size={13} /> {phone}
+        </p>
+        <div className="flex items-center justify-center gap-2 mt-3">
+          <div className="flex items-center gap-1 bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded-full text-xs font-bold border border-yellow-500/20">
+            <Star size={12} fill="currentColor" /> 5.0
+          </div>
+          <span className="text-xs text-muted-foreground bg-accent px-3 py-1 rounded-full border border-border/50">
+            Compte vérifié ✓
+          </span>
+        </div>
+      </div>
+
+      <div className="px-4 space-y-4">
+        {/* Account */}
+        <div className="bg-accent/30 border border-border/50 rounded-3xl p-2">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 pt-2 pb-1">Mon compte</p>
+          <SettingRow icon={<User size={18} />} label="Informations personnelles" sub="Nom, téléphone" href="/client/register" />
+          <SettingRow icon={<Package size={18} />} label="Mes commandes" sub="Historique des livraisons" href="/client" />
+          <SettingRow icon={<Shield size={18} />} label="Sécurité" sub="Confidentialité et données" />
+        </div>
+
+        {/* Preferences */}
+        <div className="bg-accent/30 border border-border/50 rounded-3xl p-2">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 pt-2 pb-1">Préférences</p>
+          <SettingRow icon={<Bell size={18} />} label="Notifications" sub="Offres et mises à jour" />
+          <SettingRow icon={<Moon size={18} />} label="Apparence" sub="Mode sombre / clair" />
+          <SettingRow icon={<HelpCircle size={18} />} label="Aide & Support" sub="FAQ et contact" />
+        </div>
+
+        {/* App info */}
+        <div className="bg-accent/30 border border-border/50 rounded-2xl p-4">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Version</span>
+            <span className="font-bold">1.0.0</span>
+          </div>
+          <div className="flex justify-between text-sm mt-2">
+            <span className="text-muted-foreground">Région</span>
+            <span className="font-bold">🇩🇿 Algérie</span>
+          </div>
+        </div>
+
+        {/* Logout */}
+        <div className="bg-accent/30 border border-border/50 rounded-3xl p-2">
+          <SettingRow icon={<LogOut size={18} />} label="Se déconnecter" danger onClick={() => setShowLogoutConfirm(true)} right={null} />
+        </div>
+
+        <p className="text-center text-xs text-muted-foreground pb-4">Courssa • Fait en Algérie 🇩🇿</p>
+      </div>
+
+      {/* Logout Modal */}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-background border border-border/50 rounded-3xl p-6 w-full max-w-sm shadow-2xl text-center">
+              <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <LogOut size={28} />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Se déconnecter ?</h3>
+              <p className="text-muted-foreground text-sm mb-6">Vous devrez vous reconnecter avec votre numéro de téléphone.</p>
+              <div className="flex gap-3">
+                <button onClick={() => setShowLogoutConfirm(false)} className="flex-1 bg-accent font-bold py-3.5 rounded-xl">
+                  Annuler
+                </button>
+                <button onClick={logout} disabled={isLoggingOut}
+                  className="flex-1 bg-red-500 text-white font-bold py-3.5 rounded-xl hover:bg-red-600 transition-colors flex items-center justify-center">
+                  {isLoggingOut ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Déconnecter'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }

@@ -6,9 +6,10 @@ import {
   Users, Truck, Activity, BarChart3, Package,
   Search, RefreshCw, Trash2, Check, X,
   ChevronDown, Filter, AlertTriangle, Navigation,
-  Clock, ShieldCheck, History
+  Clock, ShieldCheck, History, LogOut
 } from "lucide-react";
 import Link from "next/link";
+import { useLogout } from "@/hooks/useLogout";
 
 // ─── Types ──────────────────────────────────────────────────────────────
 type TabId = "overview" | "orders" | "users";
@@ -65,6 +66,7 @@ export default function AdminDashboard() {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const { logout, isLoggingOut } = useLogout();
 
   const fetchStats = async () => {
     try {
@@ -156,13 +158,18 @@ export default function AdminDashboard() {
         </nav>
 
         <div className="mt-8 pt-6 border-t border-border/50 hidden md:block">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center font-bold text-primary-foreground">A</div>
             <div>
               <div className="font-bold text-sm">Super Admin</div>
-              <div className="text-xs text-muted-foreground">admin@courssa.dz</div>
+              <div className="text-xs text-muted-foreground">0771005952</div>
             </div>
           </div>
+          <button onClick={logout} disabled={isLoggingOut}
+            className="w-full flex items-center gap-2 text-red-500 font-bold text-sm px-3 py-2.5 rounded-xl hover:bg-red-500/10 transition-colors">
+            <LogOut size={16} />
+            {isLoggingOut ? 'Déconnexion...' : 'Se déconnecter'}
+          </button>
         </div>
       </aside>
 
