@@ -1,62 +1,121 @@
 "use client";
-import Link from 'next/link';
-import { Mail, ArrowRight, User, Phone } from 'lucide-react';
+import { ArrowRight, User, Phone, MapPin, Loader2, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+
+const WILAYAS = ["Alger","Annaba","Batna","Béjaïa","Biskra","Blida","Bouira","Constantine","Djelfa","El Oued","Ghardaïa","Jijel","Médéa","Mila","M'Sila","Oran","Ouargla","Oum El Bouaghi","Relizane","Sétif","Sidi Bel Abbès","Skikda","Souk Ahras","Tamanrasset","Tébessa","Tiaret","Tindouf","Tipaza","Tissemsilt","Tizi Ouzou","Tlemcen"];
 
 export default function ClientRegister() {
-    return (
-        <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">
-            <div className="w-full max-w-md bg-accent/30 p-8 rounded-3xl border border-border/50">
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-black text-primary mb-2">Courssa</h1>
-                    <p className="text-muted-foreground">Créez votre compte client</p>
-                </div>
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [wilaya, setWilaya] = useState("Alger");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDone, setIsDone] = useState(false);
+  const [error, setError] = useState("");
 
-                <div className="space-y-4">
-                    <button className="w-full bg-white text-black font-semibold py-3 rounded-xl flex items-center justify-center gap-3 hover:bg-zinc-200 transition-colors">
-                        <svg viewBox="0 0 24 24" className="w-5 h-5">
-                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                        </svg>
-                        Continuer avec Google
-                    </button>
+  // Pre-fill phone from the session cookie set during /auth
+  if (typeof document !== 'undefined' && !phone) {
+    const session = document.cookie.split('; ').find(r => r.startsWith('courssa_session='))?.split('=')[1];
+    const cookiePhone = session?.split(':')[1];
+    if (cookiePhone && cookiePhone !== 'undefined') setPhone(cookiePhone);
+  }
 
-                    <div className="relative flex items-center py-4">
-                        <div className="flex-grow border-t border-border/50"></div>
-                        <span className="shrink-0 px-4 text-xs text-muted-foreground">Ou inscrivez-vous avec vos détails</span>
-                        <div className="flex-grow border-t border-border/50"></div>
-                    </div>
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setIsLoading(true);
+    setError("");
 
-                    <div>
-                        <label className="text-xs font-semibold mb-1 block">Nom complet</label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-3.5 text-muted-foreground" size={18} />
-                            <input type="text" className="w-full bg-background border border-border/50 rounded-xl py-3 pl-10 pr-4 text-sm outline-none focus:border-primary" placeholder="Ex: Mohamed Ali" />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold mb-1 block">Numéro de téléphone</label>
-                        <div className="relative">
-                            <Phone className="absolute left-3 top-3.5 text-muted-foreground" size={18} />
-                            <input type="tel" className="w-full bg-background border border-border/50 rounded-xl py-3 pl-10 pr-4 text-sm outline-none focus:border-primary" placeholder="05xx xx xx xx" />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold mb-1 block">Région</label>
-                        <select className="w-full bg-background border border-border/50 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary appearance-none cursor-pointer">
-                            <option>Alger</option>
-                            <option>Oran</option>
-                            <option>Constantine</option>
-                            <option>Annaba</option>
-                        </select>
-                    </div>
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), phone, role: "CLIENT" })
+      });
+      const data = await res.json();
 
-                    <Link href="/client" className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 hover:scale-[1.02] transition-transform shadow-lg shadow-primary/20 mt-6">
-                        Créer le compte <ArrowRight size={18} />
-                    </Link>
-                </div>
-            </div>
+      if (res.ok) {
+        setIsDone(true);
+        setTimeout(() => router.push("/client"), 1500);
+      } else {
+        setError(data.error || "Une erreur est survenue");
+      }
+    } catch {
+      setError("Erreur réseau. Réessayez.");
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.12),transparent)]" />
+      <div className="w-full max-w-sm relative z-10">
+        <div className="text-center mb-7">
+          <div className="text-3xl mb-2">🛒</div>
+          <h1 className="text-2xl font-black">Finalisez votre profil</h1>
+          <p className="text-muted-foreground text-sm mt-1">Quelques informations pour commencer</p>
         </div>
-    )
+
+        <div className="bg-accent/30 border border-border/50 p-7 rounded-3xl shadow-xl">
+          <AnimatePresence mode="wait">
+            {isDone ? (
+              <motion.div key="done" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                className="py-8 flex flex-col items-center gap-4 text-center">
+                <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center">
+                  <CheckCircle2 size={36} />
+                </div>
+                <h2 className="text-xl font-bold">Compte créé !</h2>
+                <p className="text-muted-foreground text-sm">Redirection vers votre tableau de bord…</p>
+              </motion.div>
+            ) : (
+              <motion.form key="form" onSubmit={handleSubmit} className="space-y-4">
+                {/* Name */}
+                <div>
+                  <label className="text-xs font-bold mb-1.5 block">Nom complet *</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3.5 text-muted-foreground" size={16} />
+                    <input required type="text" value={name} onChange={e => setName(e.target.value)}
+                      className="w-full bg-background border border-border/50 rounded-xl py-3 pl-9 pr-4 text-sm font-medium outline-none focus:border-primary transition-colors"
+                      placeholder="Ex: Mohamed Ben Ahmed" />
+                  </div>
+                </div>
+
+                {/* Phone (pre-filled & readonly) */}
+                <div>
+                  <label className="text-xs font-bold mb-1.5 block">Téléphone</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3.5 text-muted-foreground" size={16} />
+                    <input type="tel" value={phone} readOnly
+                      className="w-full bg-accent/40 border border-border/30 rounded-xl py-3 pl-9 pr-4 text-sm font-medium outline-none text-muted-foreground cursor-not-allowed"
+                      placeholder="0XX XX XX XX" />
+                  </div>
+                </div>
+
+                {/* Wilaya */}
+                <div>
+                  <label className="text-xs font-bold mb-1.5 block">Wilaya</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3.5 text-muted-foreground pointer-events-none z-10" size={16} />
+                    <select value={wilaya} onChange={e => setWilaya(e.target.value)}
+                      className="w-full bg-background border border-border/50 rounded-xl py-3 pl-9 pr-4 text-sm font-medium outline-none focus:border-primary appearance-none cursor-pointer">
+                      {WILAYAS.map(w => <option key={w} value={w}>{w}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+
+                <button type="submit" disabled={isLoading || !name.trim()}
+                  className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-60 transition-all active:scale-95 mt-2">
+                  {isLoading ? <Loader2 size={20} className="animate-spin" /> : <>Créer mon compte <ArrowRight size={18} /></>}
+                </button>
+              </motion.form>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
 }
