@@ -146,14 +146,9 @@ export default function Auth() {
                 <h2 className="text-xl font-bold mb-1">Connexion</h2>
                 <p className="text-sm text-muted-foreground mb-5">Entrez votre numéro de téléphone</p>
 
-                <div className="flex mb-4">
-                  <div className="bg-background border border-r-0 border-border/50 rounded-l-xl py-3.5 px-4 text-sm font-bold flex items-center text-muted-foreground">
-                    🇩🇿 +213
-                  </div>
-                  <input required type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-                    className="flex-1 bg-background border border-border/50 rounded-r-xl py-3.5 px-4 text-base font-bold outline-none focus:border-primary transition-colors"
-                    placeholder="0XX XX XX XX" />
-                </div>
+                <input required type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                  className="w-full bg-background border border-border/50 rounded-xl py-3.5 px-4 text-base font-bold outline-none focus:border-primary transition-colors mb-4"
+                  placeholder="0XX XX XX XX" />
 
                 {error && <p className="text-red-500 text-sm mb-3 font-medium">{error}</p>}
 
