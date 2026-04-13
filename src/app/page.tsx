@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowRight, Truck, Package, ShieldCheck, Clock, Star, ChevronRight, Users, Zap, MapPin } from 'lucide-react';
+import { ArrowRight, Truck, Package, ShieldCheck, Clock, Star, ChevronRight, Users, Zap, MapPin, Phone } from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
@@ -48,7 +48,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Nav */}
-      <nav className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur border-b border-border/30">
+      <nav className="fixed top-0 inset-x-0 z-50 bg-background/90 backdrop-blur border-b border-border/30">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center">
@@ -56,14 +56,19 @@ export default function HomePage() {
             </div>
             <span className="text-xl font-black">Courssa</span>
           </div>
-          <Link href="/auth" className="bg-primary text-primary-foreground font-bold px-5 py-2.5 rounded-xl text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity flex items-center gap-2">
-            Commencer <ArrowRight size={16} />
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/auth" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors px-3 py-2">
+              Se connecter
+            </Link>
+            <Link href="/auth" className="bg-primary text-primary-foreground font-bold px-5 py-2.5 rounded-xl text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity flex items-center gap-2">
+              S'inscrire <ArrowRight size={16} />
+            </Link>
+          </div>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="pt-32 pb-20 px-4 relative">
+      <section className="pt-32 pb-16 px-4 relative">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(234,179,8,0.12),transparent)]" />
         <div className="max-w-4xl mx-auto text-center relative">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -79,17 +84,31 @@ export default function HomePage() {
           </motion.h1>
 
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            Connectez-vous avec des chauffeurs vérifiés à travers toute l'Algérie. Négociez le prix, suivez votre livraison en temps réel.
+            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
+            Connectez-vous avec des chauffeurs vérifiés à travers toute l'Algérie.
+            Négociez le prix, suivez votre livraison en temps réel.
           </motion.p>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/auth" className="bg-primary text-primary-foreground font-black px-8 py-4 rounded-2xl text-lg shadow-2xl shadow-primary/25 hover:scale-105 transition-transform flex items-center justify-center gap-2">
-              Envoyer un colis <ArrowRight size={20} />
+          {/* ── Prominent Login Box ── */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+            className="bg-accent/40 backdrop-blur border border-border/60 rounded-3xl p-6 max-w-sm mx-auto mb-10 shadow-xl">
+            <p className="text-sm font-bold text-muted-foreground mb-4">Accédez à votre compte</p>
+            <Link href="/auth"
+              className="w-full bg-primary text-primary-foreground font-black py-4 rounded-2xl flex items-center justify-center gap-2 text-base shadow-lg shadow-primary/25 hover:scale-[1.02] active:scale-95 transition-all">
+              <Phone size={20} /> Connexion par téléphone
             </Link>
-            <Link href="/auth" className="bg-accent border border-border/50 font-bold px-8 py-4 rounded-2xl text-lg hover:bg-accent/80 transition-colors flex items-center justify-center gap-2">
-              Je suis chauffeur <Truck size={20} />
+            <p className="text-xs text-muted-foreground mt-3">
+              Nouveau ? Inscrivez-vous en 30 secondes après connexion.
+            </p>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/auth" className="bg-accent border border-border/50 font-bold px-6 py-3 rounded-xl text-sm hover:bg-accent/80 transition-colors flex items-center justify-center gap-2">
+              <Package size={18} /> Envoyer un colis
+            </Link>
+            <Link href="/auth" className="bg-accent border border-border/50 font-bold px-6 py-3 rounded-xl text-sm hover:bg-accent/80 transition-colors flex items-center justify-center gap-2">
+              <Truck size={18} /> Je suis chauffeur
             </Link>
           </motion.div>
         </div>

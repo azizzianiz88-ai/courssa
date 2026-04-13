@@ -71,8 +71,16 @@ export default function AdminDashboard() {
   const fetchStats = async () => {
     try {
       const res = await fetch("/api/admin/stats");
-      if (res.ok) setStats(await res.json());
-    } catch(e) {}
+      if (res.ok) {
+        setStats(await res.json());
+      } else {
+        // Show empty stats instead of loading forever
+        setStats({ orders: { total: 0, pending: 0, active: 0, completed: 0, cancelled: 0 }, users: { total: 0, drivers: 0, clients: 0 }, offers: { total: 0 }, vehicles: { total: 0 } });
+      }
+    } catch(e) {
+      // DB not ready yet — show zeros so UI doesn't hang
+      setStats({ orders: { total: 0, pending: 0, active: 0, completed: 0, cancelled: 0 }, users: { total: 0, drivers: 0, clients: 0 }, offers: { total: 0 }, vehicles: { total: 0 } });
+    }
   };
 
   const fetchOrders = async () => {
@@ -135,24 +143,36 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      {/* ── Sidebar ── */}
-      <aside className="w-full md:w-64 bg-accent/30 border-r border-border/50 p-5 flex flex-col md:h-screen md:sticky top-0 z-50">
-        <Link href="/" className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center text-primary-foreground">
-            <Truck strokeWidth={2.5} size={16} />
-          </div>
-          <div>
-            <span className="text-lg font-black leading-none">Courssa</span>
-            <span className="text-[10px] font-bold text-muted-foreground block">ADMIN PANEL</span>
-          </div>
-        </Link>
+      {/* ── Sidebar / Mobile Top Bar ── */}
+      <aside className="w-full md:w-64 bg-accent/30 border-b md:border-b-0 md:border-r border-border/50 p-4 md:p-5 flex flex-col md:h-screen md:sticky top-0 z-50">
+        <div className="flex items-center justify-between md:justify-start md:flex-col md:items-start mb-4 md:mb-8">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center text-primary-foreground">
+              <Truck strokeWidth={2.5} size={16} />
+            </div>
+            <div>
+              <span className="text-lg font-black leading-none">Courssa</span>
+              <span className="text-[10px] font-bold text-muted-foreground block">ADMIN PANEL</span>
+            </div>
+          </Link>
+          {/* Mobile logout button */}
+          <button onClick={logout} disabled={isLoggingOut}
+            className="md:hidden flex items-center gap-1.5 text-red-500 font-bold text-xs px-3 py-2 rounded-xl bg-red-500/10">
+            <LogOut size={14} />
+            {isLoggingOut ? '...' : 'Quitter'}
+          </button>
+        </div>
 
-        <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible flex-1">
+        <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible flex-1 pb-1 md:pb-0">
           {tabs.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-3 font-semibold px-4 py-3 rounded-xl transition-all text-sm shrink-0 w-full text-left ${activeTab === tab.id ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"}`}>
+              className={`flex items-center gap-2 font-semibold px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all text-sm shrink-0 md:w-full text-left ${
+                activeTab === tab.id
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50 bg-accent/30 md:bg-transparent"
+              }`}>
               {tab.icon}
-              <span className="hidden md:inline">{tab.label}</span>
+              <span className="text-xs md:text-sm">{tab.label}</span>
             </button>
           ))}
         </nav>
